@@ -63,23 +63,27 @@ export default function SignInPage() {
 	}
 
 	return (
-		<div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-			<Card className="w-full max-w-md">
-				<CardHeader className="text-center">
-					<CardTitle className="text-2xl font-bold">Admin Sign In</CardTitle>
-					<CardDescription>
+		<div className="flex items-center justify-center min-h-svh bg-muted/50 p-4">
+			<Card className="w-full max-w-md shadow-xl">
+				<CardHeader className="text-center space-y-1">
+					<CardTitle className="text-3xl font-bold text-primary">
+						Admin Sign In
+					</CardTitle>
+					<CardDescription className="text-muted-foreground">
 						Enter your credentials to access the admin panel.
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<form onSubmit={handleSubmit} className="space-y-4">
 						{formError && (
-							<div className="p-3 bg-red-100 text-red-700 border border-red-300 rounded-md">
+							<div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-md">
 								<p>{formError}</p>
 							</div>
 						)}
 						<div className="space-y-2">
-							<Label htmlFor="email">Email</Label>
+							<Label htmlFor="email" className="text-sm font-medium">
+								Email
+							</Label>
 							<Input
 								id="email"
 								type="email"
@@ -88,10 +92,13 @@ export default function SignInPage() {
 								onChange={(e) => setEmail(e.target.value)}
 								required
 								disabled={isLoading}
+								className="bg-background"
 							/>
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="password">Password</Label>
+							<Label htmlFor="password" className="text-sm font-medium">
+								Password
+							</Label>
 							<Input
 								id="password"
 								type="password"
@@ -99,15 +106,31 @@ export default function SignInPage() {
 								onChange={(e) => setPassword(e.target.value)}
 								required
 								disabled={isLoading}
+								className="bg-background"
 							/>
 						</div>
-						<Button type="submit" className="w-full" disabled={isLoading}>
-							{isLoading ? 'Signing In...' : 'Sign In'}
+						<Button
+							type="submit"
+							className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+							disabled={isLoading}
+						>
+							{isLoading ? (
+								<>
+									{/* <Loader2 className="mr-2 h-4 w-4 animate-spin" /> */}{' '}
+									{/* Assuming Loader2 is available or add it */}
+									Signing In...
+								</>
+							) : (
+								'Sign In'
+							)}
 						</Button>
 					</form>
 				</CardContent>
-				<CardFooter className="text-center text-sm">
-					<p>This is for authorized personnel only.</p>
+				<CardFooter className="text-center text-xs text-muted-foreground">
+					<p>
+						This panel is for authorized personnel only. Ensure you have
+						permission before proceeding.
+					</p>
 				</CardFooter>
 			</Card>
 		</div>

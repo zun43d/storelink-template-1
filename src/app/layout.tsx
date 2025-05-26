@@ -33,7 +33,7 @@ export default function RootLayout({
 				<SessionProvider>
 					<CartProvider>
 						<Navbar />
-						<main className="mx-auto px-4 py-8 min-h-screen">{children}</main>
+						<main className="mx-auto min-h-screen">{children}</main>
 						<Toaster richColors />
 						<Footer />
 					</CartProvider>
