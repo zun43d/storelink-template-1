@@ -106,7 +106,7 @@ export default function HomePage() {
 	}
 
 	return (
-		<div className="container mx-auto py-8 px-4 md:px-6">
+		<div className="container max-w-7xl mx-auto py-8 px-4 md:px-6">
 			{/* Featured Products Section */}
 			{featuredProducts.length > 0 && (
 				<section className="mb-12">
@@ -118,7 +118,7 @@ export default function HomePage() {
 							<Button variant="outline">View All Featured</Button>
 						</Link>
 					</div>
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+					<div className="grid grid-cols-4">
 						{featuredProducts.map((product) => (
 							<ProductCard
 								key={product.id}
@@ -129,7 +129,9 @@ export default function HomePage() {
 				</section>
 			)}
 
-			<Separator className="my-12" />
+			{featuredProducts.length > 0 && newArrivals.length > 0 && (
+				<Separator className="my-12" />
+			)}
 
 			{/* New Arrivals Section */}
 			{newArrivals.length > 0 && (
@@ -158,7 +160,9 @@ export default function HomePage() {
 			{/* Best Sellers Section - Conditionally render if there are best sellers */}
 			{bestSellers.length > 0 && (
 				<section className="mb-12">
-					<Separator className="my-12" />
+					{(newArrivals.length > 0 || featuredProducts.length > 0) && (
+						<Separator className="my-12" />
+					)}
 					<div className="flex justify-between items-center mb-6">
 						<h2 className="text-2xl font-semibold tracking-tight">
 							Best Sellers
@@ -180,7 +184,9 @@ export default function HomePage() {
 				</section>
 			)}
 
-			<Separator className="my-12" />
+			{(featuredProducts.length > 0 ||
+				newArrivals.length > 0 ||
+				bestSellers.length > 0) && <Separator className="my-12" />}
 
 			{/* All Products Link */}
 			<section className="text-center">

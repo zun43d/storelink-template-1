@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Inter, Geist_Mono } from 'next/font/google'
 import { CartProvider } from '@/context/CartContext'
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
@@ -7,8 +7,8 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import SessionProvider from '@/components/auth/SessionProvider'
 
-const geistSans = Geist({
-	variable: '--font-geist-sans',
+const inter = Inter({
+	variable: '--font-inter',
 	subsets: ['latin'],
 })
 
@@ -29,15 +29,11 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en">
-			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-			>
+			<body className={`${inter.variable} ${geistMono.variable} antialiased`}>
 				<SessionProvider>
 					<CartProvider>
 						<Navbar />
-						<main className="container mx-auto px-4 py-8 min-h-screen">
-							{children}
-						</main>
+						<main className="mx-auto px-4 py-8 min-h-screen">{children}</main>
 						<Toaster richColors />
 						<Footer />
 					</CartProvider>
