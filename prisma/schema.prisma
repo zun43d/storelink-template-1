@@ -1,0 +1,217 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DIRECT_URL")
+}
+
+model Store {
+  id               String  @id @default(cuid())
+  name             String
+  description      String?
+  logoUrl          String?
+  websiteUrl       String? // The deployed URL of this specific store instance
+  currency         String  @default("USD")
+  primaryColor     String? // For basic theming, e.g., hex code
+  secondaryColor   String?
+  contactEmail     String?
+  contactPhone     String?
+  address          String?
+  socialMediaLinks Json? // e.g., { "twitter": "url", "facebook": "url" }
+
+  products   Product[]
+  orders     Order[]
+  categories Category[]
+  users      User[] // Admin users for this store
+  accounts   Account[] // NextAuth Account for store admins
+  sessions   Session[] // NextAuth Session for store admins
+  coupons    Coupon[] // Added relation to Coupon
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  storeId     String
+  store       Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  sku         String? // Making SKU nullable as it might not be set initially or unique globally
+  name        String
+  description String?
+  price       Float
+  stockLevel  Int         @default(0)
+  imageUrls   String[]
+  isActive    Boolean     @default(true)
+  isFeatured  Boolean     @default(false)
+  categoryId  String?
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([storeId, sku])
+  @@index([storeId])
+  @@index([categoryId])
+}
+
+model Order {
+  id                   String                 @id @default(cuid())
+  storeId              String
+  store                Store                  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orderNumber          String // Added: Human-readable order identifier
+  customerName         String?
+  customerEmail        String?
+  shippingAddress      Json
+  billingAddress       Json?
+  phone                String?
+  totalAmount          Float
+  paymentMethod        String
+  paymentTransactionId String?                @unique
+  paymentStatus        OrderPaymentStatus     @default(PENDING)
+  fulfillmentStatus    OrderFulfillmentStatus @default(PENDING)
+  orderItems           OrderItem[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  @@unique([storeId, orderNumber]) // Added: orderNumber should be unique per store
+  @@index([storeId])
+  @@index([customerEmail])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String // Changed from productSku to productId for consistency
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity  Int
+  price     Float // Price at the time of order
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  storeId     String
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name        String
+  slug        String // Slug should be unique per store
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([storeId, slug])
+  @@index([storeId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@index([storeId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([storeId])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  isAdmin       Boolean   @default(false) // Added isAdmin field
+  accounts      Account[]
+  sessions      Session[]
+
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([storeId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum OrderPaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum OrderFulfillmentStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Coupon {
+  id            String    @id @default(cuid())
+  storeId       String
+  store         Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  code          String
+  discountType  String
+  discountValue Float
+  expiresAt     DateTime?
+  isActive      Boolean   @default(true)
+  minPurchase   Float?    @default(0)
+  usageLimit    Int?
+  usedCount     Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([storeId, code])
+  @@index([storeId])
+}

@@ -1,103 +1,203 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { Product as PrismaProduct } from '@prisma/client'
+import {
+	ProductCard,
+	Product as ProductCardType,
+} from '@/components/products/ProductCard'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { Loader2 } from 'lucide-react'
+import { getClientStoreId } from '@/lib/store' // Import getClientStoreId
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+type DisplayProduct = PrismaProduct
+
+async function fetchProducts(
+	filter: 'featured' | 'newArrivals' | 'bestSellers' | 'all',
+	limit: number = 8
+) {
+	const storeId = getClientStoreId() // Get storeId for API call
+	let url = `/api/products?storeId=${storeId}` // Add storeId to API call
+	const params = new URLSearchParams() // params will be appended to the url with storeId
+
+	if (filter === 'featured') {
+		params.append('featured', 'true')
+	} else if (filter === 'newArrivals') {
+		params.append('newArrivals', 'true')
+	} else if (filter === 'bestSellers') {
+		params.append('bestSellers', 'true')
+	}
+	// 'all' filter doesn't need a specific query param beyond storeId, which is already included
+
+	params.append('limit', String(limit))
+
+	const queryString = params.toString()
+	if (queryString) {
+		url += `&${queryString}` // Append other params after storeId
+	}
+
+	try {
+		const response = await fetch(url)
+		if (!response.ok) {
+			const errorData = await response
+				.json()
+				.catch(() => ({ message: `Failed to fetch ${filter} products` }))
+			throw new Error(errorData.message || `Failed to fetch ${filter} products`)
+		}
+		const data: DisplayProduct[] = await response.json()
+		return data // Limit is handled by API now, but defensive slice was fine too
+	} catch (error) {
+		console.error(error)
+		return []
+	}
+}
+
+export default function HomePage() {
+	const [featuredProducts, setFeaturedProducts] = useState<DisplayProduct[]>([])
+	const [newArrivals, setNewArrivals] = useState<DisplayProduct[]>([])
+	const [bestSellers, setBestSellers] = useState<DisplayProduct[]>([])
+	const [isLoading, setIsLoading] = useState(true)
+
+	useEffect(() => {
+		async function loadHomepageProducts() {
+			setIsLoading(true)
+			try {
+				const [featured, arrivals, sellers] = await Promise.all([
+					fetchProducts('featured', 4),
+					fetchProducts('newArrivals', 8),
+					fetchProducts('bestSellers', 8),
+				])
+				setFeaturedProducts(featured)
+				setNewArrivals(arrivals)
+				setBestSellers(sellers)
+			} catch (error) {
+				console.error('Error loading homepage products:', error)
+			} finally {
+				setIsLoading(false)
+			}
+		}
+		loadHomepageProducts()
+	}, [])
+
+	const mapProductToCardType = (
+		productData: PrismaProduct
+	): ProductCardType => {
+		return {
+			...productData,
+			sku: productData.sku ?? '',
+			imageUrls: productData.imageUrls ?? null,
+			status: productData.isActive ? 'Active' : 'Inactive',
+			// Ensure price and stockLevel are numbers, though Prisma Client usually handles this.
+			// createdAt and updatedAt are Date objects from Prisma Client.
+		}
+	}
+
+	if (isLoading) {
+		return (
+			<div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)]">
+				<Loader2 className="h-16 w-16 animate-spin text-primary" />
+				<p className="mt-4 text-lg text-muted-foreground">
+					Loading awesome products...
+				</p>
+			</div>
+		)
+	}
+
+	return (
+		<div className="container mx-auto py-8 px-4 md:px-6">
+			{/* Featured Products Section */}
+			{featuredProducts.length > 0 && (
+				<section className="mb-12">
+					<div className="flex justify-between items-center mb-6">
+						<h2 className="text-3xl font-bold tracking-tight">
+							Featured Products
+						</h2>
+						<Link href="/products?filter=featured" passHref>
+							<Button variant="outline">View All Featured</Button>
+						</Link>
+					</div>
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+						{featuredProducts.map((product) => (
+							<ProductCard
+								key={product.id}
+								product={mapProductToCardType(product)}
+							/>
+						))}
+					</div>
+				</section>
+			)}
+
+			<Separator className="my-12" />
+
+			{/* New Arrivals Section */}
+			{newArrivals.length > 0 && (
+				<section className="mb-12">
+					<div className="flex justify-between items-center mb-6">
+						<h2 className="text-2xl font-semibold tracking-tight">
+							New Arrivals
+						</h2>
+						<Link href="/products?filter=newArrivals" passHref>
+							<Button variant="outline" size="sm">
+								View All New
+							</Button>
+						</Link>
+					</div>
+					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+						{newArrivals.map((product) => (
+							<ProductCard
+								key={product.id}
+								product={mapProductToCardType(product)}
+							/>
+						))}
+					</div>
+				</section>
+			)}
+
+			{/* Best Sellers Section - Conditionally render if there are best sellers */}
+			{bestSellers.length > 0 && (
+				<section className="mb-12">
+					<Separator className="my-12" />
+					<div className="flex justify-between items-center mb-6">
+						<h2 className="text-2xl font-semibold tracking-tight">
+							Best Sellers
+						</h2>
+						<Link href="/products?filter=bestSellers" passHref>
+							<Button variant="outline" size="sm">
+								View All Best Sellers
+							</Button>
+						</Link>
+					</div>
+					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+						{bestSellers.map((product) => (
+							<ProductCard
+								key={product.id}
+								product={mapProductToCardType(product)}
+							/>
+						))}
+					</div>
+				</section>
+			)}
+
+			<Separator className="my-12" />
+
+			{/* All Products Link */}
+			<section className="text-center">
+				<h2 className="text-2xl font-semibold tracking-tight mb-6">
+					Explore All Our Products
+				</h2>
+				<Link href="/products" passHref>
+					{' '}
+					{/* This link will show all products for the store */}
+					<Button
+						size="lg"
+						className="bg-primary hover:bg-primary/90 text-primary-foreground"
+					>
+						Go to All Products
+					</Button>
+				</Link>
+			</section>
+		</div>
+	)
 }
