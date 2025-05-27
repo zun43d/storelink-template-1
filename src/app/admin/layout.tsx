@@ -15,11 +15,7 @@ import { signOut, useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-
-interface AdminLayoutProps {
-	children: React.ReactNode
-	title?: string // Optional title for the header
-}
+import React from 'react'
 
 const navItems = [
 	{ href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -28,7 +24,7 @@ const navItems = [
 	{ href: '/admin/inventory', label: 'Inventory', icon: ClipboardList }, // Placeholder, adjust if needed
 ]
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+export default function AdminLayout({ children }: {children: React.ReactNode}) {
 	const pathname = usePathname()
 	const { data: session } = useSession()
 
