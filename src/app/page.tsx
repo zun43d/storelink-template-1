@@ -118,7 +118,7 @@ export default function HomePage() {
 							<Button variant="outline">View All Featured</Button>
 						</Link>
 					</div>
-					<div className="grid grid-cols-4">
+					<div className="grid grid-cols-3 xl:grid-cols-4 gap-3">
 						{featuredProducts.map((product) => (
 							<ProductCard
 								key={product.id}
@@ -146,7 +146,7 @@ export default function HomePage() {
 							</Button>
 						</Link>
 					</div>
-					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+					<div className="grid grid-cols-3 xl:grid-cols-4 gap-3">
 						{newArrivals.map((product) => (
 							<ProductCard
 								key={product.id}
@@ -173,7 +173,7 @@ export default function HomePage() {
 							</Button>
 						</Link>
 					</div>
-					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+					<div className="grid grid-cols-3 xl:grid-cols-4 gap-3">
 						{bestSellers.map((product) => (
 							<ProductCard
 								key={product.id}
