@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/app/api/auth/[...nextauth]/options'
 import { getStoreId } from '@/lib/store'
 
 const productUpdateSchema = z.object({
@@ -24,12 +24,14 @@ const productUpdateSchema = z.object({
 
 export async function GET(
 	req: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	const session = await getServerSession(authOptions)
 	if (!session || !session.user?.isAdmin) {
 		return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
 	}
+
+	const {id} = await params
 
 	const storeId = getStoreId()
 	if (!storeId) {
@@ -41,7 +43,7 @@ export async function GET(
 
 	try {
 		const product = await prisma.product.findUnique({
-			where: { id: params.id, storeId },
+			where: { id, storeId },
 			include: { category: true },
 		})
 
@@ -54,7 +56,7 @@ export async function GET(
 		return NextResponse.json(product)
 	} catch (error) {
 		console.error(
-			`Error fetching product ${params.id} for store ${storeId}:`,
+			`Error fetching product ${id} for store ${storeId}:`,
 			error
 		)
 		return NextResponse.json(
@@ -66,12 +68,14 @@ export async function GET(
 
 export async function PUT(
 	req: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	const session = await getServerSession(authOptions)
 	if (!session || !session.user?.isAdmin) {
 		return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
 	}
+
+	const {id} = await params
 
 	const storeId = getStoreId()
 	if (!storeId) {
@@ -104,7 +108,7 @@ export async function PUT(
 		} = validation.data
 
 		const existingProduct = await prisma.product.findUnique({
-			where: { id: params.id, storeId },
+			where: { id, storeId },
 		})
 		if (!existingProduct) {
 			return NextResponse.json(
@@ -128,7 +132,7 @@ export async function PUT(
 		}
 
 		const updatedProduct = await prisma.product.update({
-			where: { id: params.id, storeId },
+			where: { id, storeId },
 			data: {
 				name,
 				description,
@@ -144,7 +148,7 @@ export async function PUT(
 		return NextResponse.json(updatedProduct)
 	} catch (error) {
 		console.error(
-			`Error updating product ${params.id} for store ${storeId}:`,
+			`Error updating product ${id} for store ${storeId}:`,
 			error
 		)
 		if (error instanceof z.ZodError) {
@@ -159,12 +163,14 @@ export async function PUT(
 
 export async function DELETE(
 	req: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	const session = await getServerSession(authOptions)
 	if (!session || !session.user?.isAdmin) {
 		return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
 	}
+
+	const {id} = await params
 
 	const storeId = getStoreId()
 	if (!storeId) {
@@ -176,7 +182,7 @@ export async function DELETE(
 
 	try {
 		const existingProduct = await prisma.product.findUnique({
-			where: { id: params.id, storeId },
+			where: { id: id, storeId },
 		})
 		if (!existingProduct) {
 			return NextResponse.json(
@@ -186,7 +192,7 @@ export async function DELETE(
 		}
 
 		const orderItemsCount = await prisma.orderItem.count({
-			where: { productId: params.id },
+			where: { productId: id },
 		})
 
 		if (orderItemsCount > 0) {
@@ -200,7 +206,7 @@ export async function DELETE(
 		}
 
 		await prisma.product.delete({
-			where: { id: params.id, storeId },
+			where: { id: id, storeId },
 		})
 
 		return NextResponse.json(
@@ -209,7 +215,7 @@ export async function DELETE(
 		)
 	} catch (error) {
 		console.error(
-			`Error deleting product ${params.id} for store ${storeId}:`,
+			`Error deleting product ${id} for store ${storeId}:`,
 			error
 		)
 		return NextResponse.json(

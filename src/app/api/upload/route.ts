@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/app/api/auth/[...nextauth]/options'
 
 // Ensure these are set in your .env file
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

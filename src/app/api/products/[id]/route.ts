@@ -4,11 +4,11 @@ import { getStoreId } from '@/lib/store'
 
 export async function GET(
 	request: Request,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
 		const storeId = getStoreId()
-		const productId = params.id
+		const {id: productId} = await params
 		const product = await prisma.product.findFirst({
 			where: {
 				id: productId,

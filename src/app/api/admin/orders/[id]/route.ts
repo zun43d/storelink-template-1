@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/app/api/auth/[...nextauth]/options'
 import { getStoreId } from '@/lib/store' // Import getStoreId
 import { OrderPaymentStatus, OrderFulfillmentStatus } from '@prisma/client' // Import enums
 
@@ -17,9 +17,10 @@ const orderUpdateSchema = z.object({
 
 export async function GET(
 	req: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	const session = await getServerSession(authOptions)
+	const {id} = await params
 	// Ensure user is admin and the session storeId matches the current operating storeId
 	const storeId = getStoreId()
 	if (!session || !session.user?.isAdmin || session.user?.storeId !== storeId) {
@@ -29,7 +30,7 @@ export async function GET(
 	try {
 		const order = await prisma.order.findUnique({
 			where: {
-				id: params.id,
+				id,
 				storeId: storeId, // Filter by storeId
 			},
 			include: {
@@ -50,7 +51,7 @@ export async function GET(
 		return NextResponse.json(order)
 	} catch (error) {
 		console.error(
-			`Error fetching order ${params.id} for store ${storeId}:`,
+			`Error fetching order ${id} for store ${storeId}:`,
 			error
 		)
 		return NextResponse.json(
@@ -62,9 +63,10 @@ export async function GET(
 
 export async function PUT(
 	req: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	const session = await getServerSession(authOptions)
+	const {id} = await params
 	const storeId = getStoreId()
 	// Ensure user is admin and the session storeId matches the current operating storeId
 	if (!session || !session.user?.isAdmin || session.user?.storeId !== storeId) {
@@ -86,7 +88,7 @@ export async function PUT(
 
 		const existingOrder = await prisma.order.findUnique({
 			where: {
-				id: params.id,
+				id,
 				storeId: storeId, // Filter by storeId
 			},
 		})
@@ -110,7 +112,7 @@ export async function PUT(
 
 		const updatedOrder = await prisma.order.update({
 			where: {
-				id: params.id,
+				id,
 				storeId: storeId, // Ensure update is store-specific
 			},
 			data: dataToUpdate,
@@ -129,7 +131,7 @@ export async function PUT(
 		return NextResponse.json(updatedOrder)
 	} catch (error) {
 		console.error(
-			`Error updating order ${params.id} for store ${storeId}:`,
+			`Error updating order ${id} for store ${storeId}:`,
 			error
 		)
 		if (error instanceof z.ZodError) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
 import { getClientStoreId } from '@/lib/store' // Import getClientStoreId
 import { useSearchParams } from 'next/navigation' // To read URL query params
@@ -24,7 +24,7 @@ async function fetchProducts(filter?: string | null): Promise<Product[]> {
 	return res.json()
 }
 
-export default function ProductListPage() {
+function ProductListPageContent() {
 	const [products, setProducts] = useState<Product[]>([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
@@ -89,5 +89,13 @@ export default function ProductListPage() {
 				</div>
 			)}
 		</div>
+	)
+}
+
+export default function ProductListPage() {
+	return (
+		<Suspense>
+			<ProductListPageContent />
+		</Suspense>
 	)
 }
