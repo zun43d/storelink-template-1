@@ -100,7 +100,7 @@ export default function AdminProductsPage() {
 				body: JSON.stringify({ isActive: !product.isActive }),
 			})
 			if (!response.ok) {
-				const errorData = await response.json()
+				return await response.json()
 			}
 		} catch (err: unknown) {
 			const errorMessage =
